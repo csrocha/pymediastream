@@ -1,0 +1,7 @@
+*.flv
+*.png
+*.iml
+*.pyc
+dots/
+.idea/
+__pycache__/

@@ -1,0 +1,6 @@
+!Pipeline
+  elements:
+    - !videotestsrc &video
+    - !ximagesink  &ximage
+  links:
+    - [ *video , *ximage ]

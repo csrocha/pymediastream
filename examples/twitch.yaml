@@ -1,0 +1,70 @@
+!Pipeline
+caps:
+  - &webcam_raw_filter "video/x-raw, format=YUY2, width=(int)320, height=(int)176, framerate=(fraction)30/1"
+  - &screen_filter "video/x-raw, width=1920, height=1080, framerate=60/1, pixel-aspect-ratio=1/1"
+  - &compose_filter "video/x-raw, width=1920, height=1080, framerate=60/1"
+  - &output_filter "video/x-raw, width=1664, height=936, framerate=60/1"
+  - &monitor_filter "video/x-raw, width=640, height=480"
+elements:
+  - !v4l2src &webcam_video
+  - !videoconvert &videoconvert
+  - !x264enc &x264enc
+    bitrate: 8250
+    speed-preset: faster
+    qp-min: 30
+    tune: zerolatency
+  - !queue &webcam_queue
+  - !pulsesrc &webcam_audio
+    device: "alsa_input.usb-046d_0825_51A16520-02.analog-mono"
+  - !audioconvert &audioconvert
+  - !queue &audio_queue
+  - !flvmux &flvmux
+    streamable: true
+  - !filesink &filesink
+    location: test.flv
+  - !ximagesrc &screen
+    use-damage: 0
+    endx: 1920
+    endy: 1080
+  - !videoscale &videoscale
+  - !queue &screen_queue
+  - !compositor &compose
+  - !tee &video_tee
+  - !queue &cmp_queue
+  - !ximagesink &video_monitor
+  - !videoscale &output_scale
+  - !videoscale &video_monitor_scale
+  - !queue &stream_queue
+  - !queue &monitor_queue
+  - !queue &file_queue
+  - !queue &live_queue
+  - !tee &streamer_tee
+  - !rtmpsink &rtmpsink
+    location: "rtmp://live.justin.tv/app/$KEY"
+pads:
+  - !Pad &audio_flvmux
+    - *flvmux
+    - audio
+  - !Pad &video_flvmux
+    - *flvmux
+    - video
+  - !Pad &screen_compose
+    - *compose
+    - sink_1
+    - zorder: 1
+  - !Pad &webcam_compose
+    - *compose
+    - sink_0
+    - zorder: 2
+      xpos: 1600
+      ypos: 0
+links:
+  - [ *webcam_audio, *audioconvert, *audio_queue, *audio_flvmux]
+  - [ *screen, *videoscale, *screen_filter, *screen_queue, *screen_compose ]
+  - [ *webcam_video, *webcam_raw_filter, *webcam_queue, *webcam_compose ]
+  - [ *compose, *compose_filter, *output_scale , *output_filter, *video_tee ]
+  - [ *video_tee, *stream_queue, *videoconvert, *x264enc, *cmp_queue, *video_flvmux ]
+  - [ *flvmux, *streamer_tee ]
+  - [ *streamer_tee, *file_queue, *filesink ]
+  - [ *streamer_tee, *live_queue, *rtmpsink ]
+  - [ *video_tee, *monitor_queue, *video_monitor_scale, *monitor_filter, *video_monitor ]

@@ -1,0 +1,9 @@
+!Pipeline
+elements:
+  - !v4l2src &webcam
+  - !videoconvert &video_convert
+  - !ximagesink &output
+cads:
+  - &webcam_raw_filter "video/x-raw, format=YUY2, width=(int)320, height=(int)176, framerate=(fraction)30/1"
+links:
+  - [ *webcam, *webcam_raw_filter, *video_convert, *output]

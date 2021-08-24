@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "pytwitch"
+version = "0.1.0"
+description = "Python Twitch streaming application."
+authors = ["Cristian S. Rocha <cristian.rocha@moldeo.coop>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+PyGObject = "^3.40.1"
+PyYAML = "^5.4.1"
+"ruamel.yaml" = "^0.17.13"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
