@@ -3,4 +3,4 @@
     - !videotestsrc &video
     - !ximagesink  &ximage
   links:
-    - [ *video , *ximage ]
+    - [ *video , "video/x-raw, width=1920, height=1080", *ximage ]

@@ -124,9 +124,19 @@ class Pipeline(YAMLObject):
                     print(f"Linked {result}: {pre_left.name} -[{caps.to_string()}]-> {right.name}")
                     caps = None
                     pre_left = None
+                elif isinstance(left, tuple):
+                    element, pad_name, *pad_setup = left
+                    result = element.link_pads(pad_name, right, None)
+                    if result and pad_setup:
+                        pad = [pad for pad in element.sinkpads if pad.name == pad_name][0]
+                        for key, value in pad_setup[0].items():
+                            set_property(pad, key, value)
+                    print(f"Linked {result}: {element.name}::{pad_name} -> {right.name}")
+                    caps = None
+                    pre_left = None
                 elif isinstance(right, tuple):
                     element, pad_name, *pad_setup = right
-                    result = left.link_pads("src", element, pad_name)
+                    result = left.link_pads(None, element, pad_name)
                     if result and pad_setup:
                         pad = [pad for pad in element.sinkpads if pad.name == pad_name][0]
                         for key, value in pad_setup[0].items():

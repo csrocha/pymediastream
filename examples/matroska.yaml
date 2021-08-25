@@ -1,0 +1,16 @@
+!Pipeline
+elements:
+  - !filesrc &file_in
+    location: /home/crocha/Videos/Webcam/2021-04-02-192351.webm
+  - !matroskademux &matroska_demux
+  - !vp8dec &vp8dec
+  - !videoconvert &videoconvert
+  - !videoscale &videoscale
+  - !autovideosink  &monitor
+pads:
+  - !Pad &matroska_demux_video
+    - *matroska_demux
+    - video_0
+links:
+  - [ *file_in , *matroska_demux ]
+  - [ *matroska_demux_video, *vp8dec, *videoconvert, *videoscale, *monitor]

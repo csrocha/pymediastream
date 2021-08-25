@@ -1,11 +1,13 @@
+import threading
 import sys
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
 from gst_yaml import load, dump_dot_graph
+from shell import StreamControllerShell
 
 
-def bus_call(bus, message, loop):
+def bus_call(_bus, message, loop):
     t = message.type
     if t == Gst.MessageType.EOS:
         sys.stdout.write("End-of-stream\n")
@@ -15,6 +17,10 @@ def bus_call(bus, message, loop):
         sys.stderr.write("Error: %s: %s\n" % (err, debug))
         loop.quit()
     return True
+
+
+def shell_loop(pipeline):
+    StreamControllerShell(pipeline, Gst.State.PAUSED).cmdloop("Starting")
 
 
 def main(args):
@@ -29,8 +35,6 @@ def main(args):
 
     pipeline.set_state(Gst.State.PAUSED)
 
-    pipeline.set_state(Gst.State.PLAYING)
-
     dump_dot_graph(pipeline)
 
     loop = GLib.MainLoop()
@@ -39,7 +43,13 @@ def main(args):
     bus.add_signal_watch()
     bus.connect("message", bus_call, loop)
 
+    thread = threading.Thread(target=shell_loop, args=(pipeline,))
+    thread.daemon = True
+    thread.start()
+
     loop.run()
+
+    thread.join()
 
     pipeline.set_state(Gst.State.NULL)
 
