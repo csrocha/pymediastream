@@ -1,3 +1,3 @@
-# PyTwitch
+# PyMediaStream
 
-Not description yet.
+Simple tool to setup media streaming to many places, as twitch.
