@@ -3,13 +3,26 @@ from ruamel.yaml import load as yaml_load
 from ruamel.yaml import Loader, Dumper, YAMLObject
 from ruamel.yaml import ScalarNode, MappingNode
 from gi.repository import Gst
+from joiner import Joiner
 
 
-def on_pad_added(*args):
-    return True
+joiner = Joiner()
+
+
+def on_pad_added(src, new_pad):
+    ref = f"{src.name}:{new_pad.name}"
+    print(f"Created new pad {ref}")
+    if ref in joiner:
+        joiner.join_lazy(ref)
 
 
 def set_property(element, key, value):
+    """Set element's property
+    :param element: Element to set
+    :param key: Property name
+    :param value: Property value
+    :return: None
+    """
     if isinstance(value, str):
         value = os.path.expandvars(value)
     print(f"\t{key} as {value}")
@@ -20,8 +33,9 @@ def set_property(element, key, value):
 
 
 def set_properties(element, attributes):
+    """Set element properties from a map of attributes"""
     for key, value in attributes.items():
-        if isinstance(value, dict): # The key reference to a pad
+        if isinstance(value, dict):
             pad_template = element.get_pad_template(key)
             if pad_template:
                 pad = element.request_pad(pad_template, None, None)
@@ -37,7 +51,6 @@ class Element(YAMLObject):
 
     yaml_tag = None
     element_name = None
-
 
     @classmethod
     def from_yaml(cls, loader, node):
@@ -59,31 +72,6 @@ class Element(YAMLObject):
     @classmethod
     def to_yaml(cls, dumper, data):
         return None
-
-
-def build_element_classes(elements):
-    element_class = {}
-    for element in elements:
-        element_class[element] = type(element, (Element,), {
-            'yaml_tag': f'!{element}',
-            'element_name': f'{element}',
-        })
-    return element_class
-
-
-def get_plugins():
-    Gst.init()
-    reg = Gst.Registry.get()
-    return [p.get_name() for p in reg.get_plugin_list()]
-
-
-def get_elements():
-    Gst.init()
-    reg = Gst.Registry.get()
-    return [f.get_name() for f in reg.get_feature_list(Gst.ElementFactory)]
-
-
-ELEMENT_CLASS = build_element_classes(get_elements())
 
 
 class Pad(YAMLObject):
@@ -113,41 +101,16 @@ class Pipeline(YAMLObject):
             pipeline.add(element)
 
         for link in pipeline_map['links']:
-            caps = None
             pre_left = None
             for left, right in zip(link[:-1], link[1:]):
                 if isinstance(right, str):
-                    caps = Gst.Caps.from_string(right)
                     pre_left = left
-                elif isinstance(left, str) and caps:
-                    result = pre_left.link_filtered(right, caps)
-                    print(f"Linked {result}: {pre_left.name} -[{caps.to_string()}]-> {right.name}")
-                    caps = None
-                    pre_left = None
-                elif isinstance(left, tuple):
-                    element, pad_name, *pad_setup = left
-                    result = element.link_pads(pad_name, right, None)
-                    if result and pad_setup:
-                        pad = [pad for pad in element.sinkpads if pad.name == pad_name][0]
-                        for key, value in pad_setup[0].items():
-                            set_property(pad, key, value)
-                    print(f"Linked {result}: {element.name}::{pad_name} -> {right.name}")
-                    caps = None
-                    pre_left = None
-                elif isinstance(right, tuple):
-                    element, pad_name, *pad_setup = right
-                    result = left.link_pads(None, element, pad_name)
-                    if result and pad_setup:
-                        pad = [pad for pad in element.sinkpads if pad.name == pad_name][0]
-                        for key, value in pad_setup[0].items():
-                            set_property(pad, key, value)
-                    print(f"Linked {result}: {left.name} -> {element.name}::{pad_name}")
-                    caps = None
-                    pre_left = None
                 else:
-                    result = left.link(right)
-                    print(f"Linked {result}: {left.name} -> {right.name}")
-                    caps = None
+                    caps, left = (Gst.Caps.from_string(left), pre_left) if isinstance(left, str) else (None, left)
+                    left_element, left_pad, *left_pad_setup = left if isinstance(left, tuple) else (left, None)
+                    right_element, right_pad, *right_pad_setup = right if isinstance(right, tuple) else (right, None)
+
+                    joiner.join(left_element, left_pad, caps, right_element, right_pad)
                     pre_left = None
 
         return pipeline
@@ -157,33 +120,33 @@ class Pipeline(YAMLObject):
         return None
 
 
-class Caps(YAMLObject):
-    yaml_dumper = Dumper
-    yaml_loader = Loader
+def _build_element_classes(elements):
+    element_class = {}
+    for element in elements:
+        element_class[element] = type(element, (Element,), {
+            'yaml_tag': f'!{element}',
+            'element_name': f'{element}',
+        })
+    return element_class
 
-    yaml_tag = u'!capsfilter'
 
-    @classmethod
-    def from_yaml(cls, loader, node):
-        caps_string = loader.construct_scalar(node)
-        caps = Gst.Caps.from_string(caps_string)
-        element = Gst.ElementFactory.make("capsfilter", None)
-        element.set_properties("caps", caps)
-        return element
+def _get_elements():
+    Gst.init()
+    reg = Gst.Registry.get()
+    return [f.get_name() for f in reg.get_feature_list(Gst.ElementFactory)]
 
-    @classmethod
-    def to_yaml(cls, dumper, data):
-        return None
+
+ELEMENT_CLASS = _build_element_classes(_get_elements())
 
 
 def dump_dot_graph(pipeline):
-    envname = 'GST_DEBUG_DUMP_DOT_DIR'
-    if envname not in os.environ:
-        os.environ[envname] = "./dots"
+    environment_var_name = 'GST_DEBUG_DUMP_DOT_DIR'
+    if environment_var_name not in os.environ:
+        os.environ[environment_var_name] = "./dots"
 
     Gst.debug_bin_to_dot_file(pipeline, Gst.DebugGraphDetails.ALL, "YAML")
 
-    print(f"- Pipeline debug info written to file '{os.environ[envname]}/YAML.dot'")
+    print(f"- Pipeline debug info written to file '{os.environ[environment_var_name]}/YAML.dot'")
 
 
 def load(stream, Loader=Loader):

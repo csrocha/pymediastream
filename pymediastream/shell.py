@@ -40,12 +40,25 @@ class StreamControllerShell(cmd.Cmd):
         """Show element info."""
         element = self._pipeline.get_by_name(arg) if arg else self._pipeline
         print(f"Name: {element.name}")
+        print(f"Duration: {element.query_duration(Gst.Format.TIME).duration/(10**9)} Seg")
+        print(f"Position: {element.query_position(Gst.Format.TIME).cur/(10**9)} Seg")
         print("Properties:")
         for p in element.list_properties():
             key = p.name
             value = element.get_property(key)
             print(f"\t{key}: {value}")
         pass
+
+    def do_seek(self, arg):
+        if not arg:
+            print("Requires element position or only position.")
+            return
+
+        first, *second = arg.split(" ", 1)
+
+        element = self._pipeline.get_by_name(first) if second else self._pipeline
+        position = second[0] if second else first
+        element.seek_simple(Gst.Format.PERCENT, Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT, float(position)*(10**9))
 
     def do_set(self, arg):
         element_name, key, value = arg.split(' ', 2)
