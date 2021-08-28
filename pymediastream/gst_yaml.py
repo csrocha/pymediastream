@@ -3,7 +3,7 @@ from ruamel.yaml import load as yaml_load
 from ruamel.yaml import Loader, Dumper, YAMLObject
 from ruamel.yaml import ScalarNode, MappingNode
 from gi.repository import Gst
-from joiner import Joiner
+from .joiner import Joiner
 
 
 joiner = Joiner()

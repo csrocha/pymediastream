@@ -1,10 +1,11 @@
+import click
 import threading
 import sys
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
-from gst_yaml import load, dump_dot_graph
-from shell import StreamControllerShell
+from .gst_yaml import load, dump_dot_graph
+from .shell import StreamControllerShell
 
 
 def bus_call(_bus, message, loop):
@@ -23,14 +24,16 @@ def shell_loop(pipeline):
     StreamControllerShell(pipeline, Gst.State.PAUSED).cmdloop("Starting")
 
 
-def main(args):
-    if len(args) != 2:
-        sys.stderr.write("usage: %s <media file or uri>\n" % args[0])
-        sys.exit(1)
+@click.command()
+@click.argument("filename")
+def main(filename):
+    """Load an streaming descriptor file and starts a CLI to control the stream.
+
+    FILENAME is an streaming descriptor file."""
 
     Gst.init(None)
 
-    with open(args[1], 'r') as descriptor:
+    with open(filename, 'r') as descriptor:
         pipeline = load(descriptor)
 
     pipeline.set_state(Gst.State.PAUSED)
@@ -55,4 +58,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    sys.exit(main(*sys.argv))
