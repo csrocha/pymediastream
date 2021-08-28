@@ -4,7 +4,7 @@ import sys
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
-from .gst_yaml import load, dump_dot_graph
+from .gst_yaml import load
 from .shell import StreamControllerShell
 
 
@@ -38,7 +38,7 @@ def main(filename):
 
     pipeline.set_state(Gst.State.PAUSED)
 
-    dump_dot_graph(pipeline)
+    pipeline.dump_dot_graph()
 
     loop = GLib.MainLoop()
 
@@ -58,4 +58,4 @@ def main(filename):
 
 
 if __name__ == '__main__':
-    sys.exit(main(*sys.argv))
+    main()

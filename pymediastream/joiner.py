@@ -1,7 +1,3 @@
-def next_unlinked(pads):
-    """ Select first unlinked pad in a list """
-    return next((pad.name for pad in pads if not pad.is_linked()), None)
-
 
 class Joiner:
     """ This class support lazy element joiner """
@@ -9,24 +5,22 @@ class Joiner:
         self._lazy_join = {}
 
     def join(self, left_element, left_pad, caps, right_element, right_pad):
-        left_pad = left_pad or next_unlinked(left_element.srcpads)
-        right_pad = right_pad or next_unlinked(right_element.sinkpads)
+        left_pad = left_pad or left_element.get_unlinked_srcpad()
+        right_pad = right_pad or right_element.get_unlinked_sinkpad()
 
         if caps:
             result = left_element.link_pads_filtered(left_pad, right_element, right_pad, caps)
-            print(f"Linked {result}: {left_element.name}:{left_pad}"
+            print(f"Linked {result}: {left_element.name}:{left_pad and left_pad.name}"
                   f" -[{caps.to_string()}]-> "
-                  f"{right_element.name}:{right_pad}")
+                  f"{right_element.name}:{right_pad and right_pad.name}")
         else:
             result = left_element.link_pads(left_pad, right_element, right_pad)
-            print(f"Linked {result}: {left_element.name}:{left_pad}"
+            print(f"Linked {result}: {left_element.name}:{left_pad and left_pad.name}"
                   f" --> "
-                  f"{right_element.name}:{right_pad}")
+                  f"{right_element.name}:{right_pad and right_pad.name}")
 
         if result is False:
-            self._lazy_join[f"{left_element.name}:{left_pad}"] = (left_element, left_pad,
-                                                                  caps,
-                                                                  right_element, right_pad)
+            self._lazy_join[f"{left_element.name}:{left_pad.name}"] = (left_element, left_pad, caps, right_element, right_pad)
 
     def __contains__(self, item):
         return item in self._lazy_join

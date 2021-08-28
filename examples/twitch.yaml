@@ -43,19 +43,21 @@ elements:
     location: "rtmp://live.justin.tv/app/$KEY"
 pads:
   - !Pad &audio_flvmux
-    - *flvmux
-    - audio
+    element: *flvmux
+    pad_name: audio
   - !Pad &video_flvmux
-    - *flvmux
-    - video
+    element: *flvmux
+    pad_name: video
   - !Pad &screen_compose
-    - *compose
-    - sink_1
-    - zorder: 1
+    element: *compose
+    pad_name: sink_1
+    setup:
+      zorder: 1
   - !Pad &webcam_compose
-    - *compose
-    - sink_0
-    - zorder: 2
+    element: *compose
+    pad_name: sink_0
+    setup:
+      zorder: 2
       xpos: 1600
       ypos: 0
 links:

@@ -9,8 +9,8 @@ elements:
   - !autovideosink  &monitor
 pads:
   - !Pad &matroska_demux_video
-    - *matroska_demux
-    - video_0
+    element: *matroska_demux
+    pad_name: video_0
 links:
   - [ *file_in , *matroska_demux ]
   - [ *matroska_demux_video, *vp8dec, *videoconvert, *videoscale, *monitor]
