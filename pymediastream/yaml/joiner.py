@@ -20,7 +20,15 @@ class Joiner:
                   f"{right_element.name}:{right_pad and right_pad.name}")
 
         if result is False:
-            self._lazy_join[f"{left_element.name}:{left_pad.name}"] = (left_element, left_pad, caps, right_element, right_pad)
+            ref = f"{left_element.name}:{left_pad.name}"
+            print(f"Creating lazy join {ref}")
+            self._lazy_join[ref] = (
+                left_element,
+                left_pad,
+                caps,
+                right_element,
+                right_pad
+            )
 
     def __contains__(self, item):
         return item in self._lazy_join
@@ -29,3 +37,6 @@ class Joiner:
         print(f"Joining lazy {ref}")
         self.join(*self._lazy_join[ref])
         pass
+
+
+joiner = Joiner()

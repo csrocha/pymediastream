@@ -42,30 +42,24 @@ elements:
   - !rtmpsink &rtmpsink
     location: "rtmp://live.justin.tv/app/$KEY"
 pads:
-  - !Pad &audio_flvmux
-    element: *flvmux
-    pad_name: audio
-  - !Pad &video_flvmux
-    element: *flvmux
-    pad_name: video
   - !Pad &screen_compose
     element: *compose
-    pad_name: sink_1
+    pad_name: sink_0
     setup:
       zorder: 1
   - !Pad &webcam_compose
     element: *compose
-    pad_name: sink_0
+    pad_name: sink_1
     setup:
       zorder: 2
       xpos: 1600
       ypos: 0
 links:
-  - [ *webcam_audio, *audioconvert, *audio_queue, *audio_flvmux]
+  - [ *webcam_audio, *audioconvert, *audio_queue, *flvmux]
   - [ *screen, *videoscale, *screen_filter, *screen_queue, *screen_compose ]
   - [ *webcam_video, *webcam_raw_filter, *webcam_queue, *webcam_compose ]
   - [ *compose, *compose_filter, *output_scale , *output_filter, *video_tee ]
-  - [ *video_tee, *stream_queue, *videoconvert, *x264enc, *cmp_queue, *video_flvmux ]
+  - [ *video_tee, *stream_queue, *videoconvert, *x264enc, *cmp_queue, *flvmux ]
   - [ *flvmux, *streamer_tee ]
   - [ *streamer_tee, *file_queue, *filesink ]
   - [ *streamer_tee, *live_queue, *rtmpsink ]

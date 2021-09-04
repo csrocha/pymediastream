@@ -1,12 +1,14 @@
 from gi.repository import Gst
 import cmd
+import graphviz
+from pymediastream.gst_yaml import Pipeline
 
 
 class StreamControllerShell(cmd.Cmd):
     intro = "Stream Controller Shell. Type help or ? to list commands.\n"
     prompt = "(streamer) "
 
-    def __init__(self, pipeline, initial_state):
+    def __init__(self, pipeline: Pipeline, initial_state):
         self._pipeline = pipeline
         self._initial_state = initial_state
         super().__init__()
@@ -48,6 +50,11 @@ class StreamControllerShell(cmd.Cmd):
             value = element.get_property(key)
             print(f"\t{key}: {value}")
         pass
+
+    def do_graph(self, args):
+        dot_file = self._pipeline.dump_dot_graph()
+        dot_src = graphviz.Source.from_file(dot_file)
+        dot_src.render(view=True)
 
     def do_seek(self, arg):
         if not arg:

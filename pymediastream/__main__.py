@@ -4,8 +4,8 @@ import sys
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
-from .gst_yaml import load
-from .shell import StreamControllerShell
+from pymediastream.gst_yaml import load
+from pymediastream.shell import StreamControllerShell
 
 
 def bus_call(_bus, message, loop):
