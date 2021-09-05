@@ -69,6 +69,8 @@ links:
   - [ *video_tee, *monitor_queue, *video_monitor_scale, *monitor_filter, *video_monitor ]
 transitions:
   with_webcam: !Transition
+    webcam_video:
+      _null_reset: True
     webcam_capsfilter:
       caps: *small_webcam_raw_filter
     compose:sink_0:
@@ -78,6 +80,8 @@ transitions:
       xpos: 1600
       ypos: 0
   without_webcam: !Transition
+    webcam_video:
+      _null_reset: True
     webcam_capsfilter:
       caps: *small_webcam_raw_filter
     compose:sink_0:
@@ -87,6 +91,8 @@ transitions:
       xpos: 1600
       ypos: 0
   full_webcam: !Transition
+    webcam_video:
+      _null_reset: True
     webcam_capsfilter:
       caps: *full_screen_webcam_raw_filter
     compose:sink_1:
