@@ -68,6 +68,6 @@ class Pipeline(YAMLObject):
                     joiner.join(left_element, left_pad, caps, right_element, right_pad)
                     pre_left = None
 
-        pipeline._transitions = pipeline_map['transitions']
+        pipeline._transitions = pipeline_map.get('transitions', {})
 
         return pipeline
