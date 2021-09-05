@@ -72,6 +72,13 @@ class StreamControllerShell(cmd.Cmd):
         element = self._pipeline.get_by_name(element_name) if element_name else self._pipeline
         element.set_property(key, value)
 
+    def do_transition(self, arg):
+        self._pipeline.change_to(arg)
+
+    def do_transitions(self, arg):
+        for key in self._pipeline.list_transitions():
+            print(f"\t{key}")
+
     def do_exit(self, arg):
         """Stop processing."""
         self.close()

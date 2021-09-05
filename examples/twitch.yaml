@@ -1,12 +1,15 @@
 !Pipeline
 caps:
-  - &webcam_raw_filter "video/x-raw, format=YUY2, width=(int)320, height=(int)176, framerate=(fraction)30/1"
+  - !Caps &small_webcam_raw_filter "video/x-raw, format=YUY2, width=(int)320, height=(int)176, framerate=(fraction)30/1"
+  - !Caps &full_screen_webcam_raw_filter "video/x-raw, format=YUY2, width=(int)640, height=(int)360, framerate=(fraction)30/1"
   - &screen_filter "video/x-raw, width=1920, height=1080, framerate=60/1, pixel-aspect-ratio=1/1"
   - &compose_filter "video/x-raw, width=1920, height=1080, framerate=60/1"
   - &output_filter "video/x-raw, width=1664, height=936, framerate=60/1"
   - &monitor_filter "video/x-raw, width=640, height=480"
 elements:
   - !v4l2src &webcam_video
+  - !capsfilter &webcam_capsfilter
+    caps: *small_webcam_raw_filter
   - !videoconvert &videoconvert
   - !x264enc &x264enc
     bitrate: 8250
@@ -57,10 +60,36 @@ pads:
 links:
   - [ *webcam_audio, *audioconvert, *audio_queue, *flvmux]
   - [ *screen, *videoscale, *screen_filter, *screen_queue, *screen_compose ]
-  - [ *webcam_video, *webcam_raw_filter, *webcam_queue, *webcam_compose ]
+  - [ *webcam_video, *webcam_capsfilter, *webcam_queue, *webcam_compose ]
   - [ *compose, *compose_filter, *output_scale , *output_filter, *video_tee ]
   - [ *video_tee, *stream_queue, *videoconvert, *x264enc, *cmp_queue, *flvmux ]
   - [ *flvmux, *streamer_tee ]
   - [ *streamer_tee, *file_queue, *filesink ]
   - [ *streamer_tee, *live_queue, *rtmpsink ]
   - [ *video_tee, *monitor_queue, *video_monitor_scale, *monitor_filter, *video_monitor ]
+transitions:
+  with_webcam: !Transition
+    webcam_capsfilter:
+      caps: *small_webcam_raw_filter
+    compose:sink_0:
+      zorder: 1
+    compose:sink_1:
+      zorder: 2
+      xpos: 1600
+      ypos: 0
+  without_webcam: !Transition
+    webcam_capsfilter:
+      caps: *small_webcam_raw_filter
+    compose:sink_0:
+      zorder: 2
+    compose:sink_1:
+      zorder: 1
+      xpos: 1600
+      ypos: 0
+  full_webcam: !Transition
+    webcam_capsfilter:
+      caps: *full_screen_webcam_raw_filter
+    compose:sink_1:
+      zorder: 2
+      xpos: 0
+      ypos: 0

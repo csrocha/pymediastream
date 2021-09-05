@@ -1,6 +1,6 @@
 from typing import Any
 import os
-from yaml.joiner import Joiner
+from .joiner import Joiner
 
 joiner = Joiner()
 

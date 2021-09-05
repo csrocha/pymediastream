@@ -4,3 +4,16 @@
     - !ximagesink  &ximage
   links:
     - [ *video , "video/x-raw, width=1920, height=1080", *ximage ]
+  transitions:
+    snow: !Transition
+      video:
+        pattern: snow
+    black: !Transition
+      video:
+        pattern: black
+    ball: !Transition
+      video:
+        pattern: ball
+    gamut: !Transition
+      video:
+        pattern: gamut

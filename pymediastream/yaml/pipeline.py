@@ -13,9 +13,15 @@ class Pipeline(YAMLObject):
 
     def __init__(self, pipeline):
         self._pipeline = pipeline
+        self._transitions = {}
 
     def add(self, element):
         self._pipeline.add(element.get_element())
+
+    def get(self, ref):
+        element_name, *pad_name = ref.split(':')
+        element = self._pipeline.get_by_name(element_name)
+        return element.get_static_pad(pad_name[0]) if pad_name else element
 
     def set_state(self, state):
         return self._pipeline.set_state(state)
@@ -33,6 +39,13 @@ class Pipeline(YAMLObject):
 
         print(f"- Pipeline debug info written to file '{target_dot_file}'")
         return target_dot_file
+
+    def list_transitions(self):
+        return self._transitions.keys()
+
+    def change_to(self, transition_name):
+        transition = self._transitions[transition_name]
+        transition.run(self)
 
     @classmethod
     def from_yaml(cls, loader, node):
@@ -54,5 +67,7 @@ class Pipeline(YAMLObject):
 
                     joiner.join(left_element, left_pad, caps, right_element, right_pad)
                     pre_left = None
+
+        pipeline._transitions = pipeline_map['transitions']
 
         return pipeline
